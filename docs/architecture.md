@@ -27,6 +27,9 @@ Para el MVP, los datos se almacenan en memoria utilizando estructuras simples, l
 - **Almacenamiento en Memoria:**
   Guarda temporalmente la información de ingresos y egresos durante la ejecución del sistema.
 
+- **Redis (Capa de Cache):**
+  Se incorpora como una mejora de rendimiento utilizando el patrón cache-aside para almacenar respuestas frecuentes del endpoint de consulta de egresos.
+
 ---
 
 ## Diagrama de Arquitectura
@@ -34,36 +37,19 @@ Para el MVP, los datos se almacenan en memoria utilizando estructuras simples, l
 ```mermaid
 graph TD
     Usuario -->|Solicitudes HTTP| API[API REST - FastAPI]
+
+    API --> Redis[(Redis Cache)]
+
     API --> Validacion[Validacion de datos Pydantic]
     API --> Logica[Logica de negocio]
+
     Logica --> Ingresos[Gestion de ingresos]
     Logica --> Egresos[Gestion de egresos]
     Egresos --> Aprobacion[Aprobacion de egresos]
+
     Logica --> Memoria[Almacenamiento en memoria]
+
+    Redis -->|Cache HIT| API
+    API -->|Cache MISS| Memoria
+
     API -->|Respuestas JSON| Usuario
-```
-## Decisiones Arquitectónicas
-
-### Uso de FastAPI
-
-Se decidió utilizar FastAPI como framework principal para la construcción de la API debido a su alto rendimiento, simplicidad y soporte nativo para la creación de APIs REST. Además, FastAPI genera automáticamente documentación interactiva (Swagger), lo que facilita las pruebas y validación del sistema durante el desarrollo del MVP.
-
----
-
-### Almacenamiento en Memoria
-
-Para la versión inicial (MVP), se optó por utilizar almacenamiento en memoria en lugar de una base de datos persistente. Esta decisión permite reducir la complejidad técnica y enfocarse en validar el flujo principal del negocio sin necesidad de configurar infraestructura adicional.
-
-En futuras versiones, se contempla la integración de una base de datos relacional para garantizar persistencia y escalabilidad.
-
----
-
-### Validación de Datos con Pydantic
-
-Se implementó validación de datos utilizando modelos de Pydantic, lo que permite definir estructuras claras para los datos de entrada y asegurar que cumplan con los formatos requeridos antes de ser procesados por la lógica del sistema.
-
----
-
-### Ausencia de Autenticación en el MVP
-
-No se implementó un sistema de autenticación en esta versión inicial, ya que el enfoque principal es validar la lógica funcional del sistema. La gestión de usuarios y seguridad será incorporada en iteraciones futuras del sistema.
