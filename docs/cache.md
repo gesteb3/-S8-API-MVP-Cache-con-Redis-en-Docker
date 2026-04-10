@@ -1,45 +1,85 @@
-# Cache en MoveFast
+## Implementación de Cache en SIMAF
 
-## ¿Qué es el cache?
+### Descripción General
+Se implementó una capa de cache utilizando Redis con el objetivo de mejorar el rendimiento del sistema al reducir consultas repetitivas hacia la fuente principal de datos.
 
-El cache es un mecanismo que permite almacenar temporalmente datos en memoria para responder más rápido a las solicitudes sin tener que consultar constantemente la base de datos.
+---
 
-## Uso del cache en MoveFast
+### Endpoint(s) que usan cache
+El endpoint que implementa cache es:
 
-En el sistema MoveFast, el cache se utiliza de forma simulada mediante estructuras en memoria (listas y diccionarios en Python), donde se almacenan:
+- GET /egresos/{id}
 
-- Conductores disponibles
-- Viajes en curso
-- Estado de los nodos
+Este endpoint fue seleccionado debido a que representa una operación de consulta frecuente dentro del sistema.
 
-Esto permite que las consultas sean rápidas y eficientes, simulando el comportamiento de sistemas reales.
+---
 
-## Ejemplo en el sistema
+### Claves de Redis generadas
+Las claves en Redis siguen el siguiente formato:
 
-Cuando se solicita un viaje:
-- El sistema consulta primero los conductores disponibles en memoria
-- Asigna uno sin necesidad de consultar una base de datos externa
+egreso:{id}
 
-De igual manera, los viajes se almacenan en una lista que funciona como cache temporal.
+Ejemplo:
+egreso:1
 
-## Ventajas
+Esto permite identificar de manera única cada registro almacenado en cache.
 
-- Respuesta rápida (baja latencia)
-- Menor carga en la base de datos
-- Mejor experiencia de usuario
+---
 
-## Desventajas
+### TTL definido
+Se configuró un TTL (Time To Live) de:
 
-- Posibles inconsistencias temporales
-- Pérdida de datos si el sistema se reinicia
-- No es persistente
+60 segundos
 
-## Relación con sistemas distribuidos
+Esto garantiza que los datos almacenados en cache expiren automáticamente, evitando el uso de información desactualizada por largos periodos.
 
-En arquitecturas reales, el cache se implementa con herramientas como Redis o Memcached, permitiendo:
+---
 
-- Compartir información entre nodos
-- Reducir tiempos de respuesta
-- Soportar alta concurrencia
+### Estrategia de cache utilizada
+Se implementa el patrón:
 
-En MoveFast, este comportamiento se simula para demostrar cómo el cache mejora el rendimiento dentro de un sistema distribuido.
+cache-aside
+
+Flujo de funcionamiento:
+
+1. La API recibe la solicitud del cliente.
+2. Se consulta Redis para verificar si el dato existe.
+3. Si existe → se retorna desde cache (cache hit).
+4. Si no existe → se consulta la fuente principal (memoria).
+5. Se almacena el resultado en Redis con TTL.
+6. Se retorna la respuesta al cliente.
+
+---
+
+### Comportamiento del sistema
+
+#### Cache HIT
+- El dato existe en Redis.
+- Se retorna directamente desde cache.
+- Reduce el tiempo de respuesta.
+- Evita procesamiento adicional.
+
+#### Cache MISS
+- El dato no existe en Redis.
+- Se consulta la fuente principal.
+- Se almacena en Redis con TTL.
+- Se retorna al cliente.
+
+---
+
+### Responsabilidad del cache
+La capa de cache tiene como responsabilidad:
+
+- Almacenar temporalmente datos de acceso frecuente.
+- Reducir la latencia en consultas repetidas.
+- Disminuir la carga sobre la fuente principal de datos.
+- Mejorar el rendimiento general del sistema.
+
+---
+
+### Riesgos o limitaciones
+
+- Posible inconsistencia de datos durante el tiempo de vida del TTL.
+- No se implementa invalidación de cache al actualizar datos.
+- Dependencia de Redis como componente crítico.
+- Almacenamiento principal en memoria (no persistente en este MVP).
