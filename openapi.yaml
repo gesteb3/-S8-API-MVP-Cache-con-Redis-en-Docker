@@ -1,0 +1,119 @@
+openapi: 3.0.0
+info:
+  title: SIMAF API
+  description: API para la gestión de ingresos y egresos municipales
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+    description: Servidor local
+
+paths:
+
+  /ingresos:
+    post:
+      summary: Registrar ingreso
+      tags:
+        - Ingresos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Ingreso'
+      responses:
+        "200":
+          description: Ingreso registrado correctamente
+        "400":
+          description: Datos inválidos
+
+  /egresos:
+    post:
+      summary: Registrar egreso
+      tags:
+        - Egresos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Egreso'
+      responses:
+        "200":
+          description: Egreso registrado correctamente
+        "400":
+          description: Datos inválidos
+
+  /egresos/{id}/aprobar:
+    put:
+      summary: Aprobar egreso
+      tags:
+        - Egresos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Egreso aprobado correctamente
+        "404":
+          description: Egreso no encontrado
+
+  /egresos/{id}:
+    get:
+      summary: Obtener egreso por ID
+      tags:
+        - Egresos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Egreso encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Egreso'
+        "404":
+          description: Egreso no encontrado
+
+components:
+  schemas:
+
+    Ingreso:
+      type: object
+      required:
+        - id
+        - monto
+        - descripcion
+      properties:
+        id:
+          type: integer
+          example: 1
+        monto:
+          type: number
+          example: 5000
+        descripcion:
+          type: string
+          example: "Pago de impuestos"
+
+    Egreso:
+      type: object
+      required:
+        - id
+        - monto
+      properties:
+        id:
+          type: integer
+          example: 1
+        monto:
+          type: number
+          example: 2000
+        estado:
+          type: string
+          example: "pendiente"
